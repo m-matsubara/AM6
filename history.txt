@@ -1,0 +1,48 @@
+開発履歴
+■version 0.4.1 2019/09/07
+  ・パッケージを jp.gr.java_conf.matsubara から com.mmatsubara へ変更
+  ・GitHubに載せるために、ビルド時のソースアーカイブをやめる
+  ・小修整
+
+■version 0.4.0 2006/04/20
+  ・2006/04/15～2006/04/20
+  for-in 構文のサポート（ようやく）
+    for (variable in objectExpression) … でobjectExpressionがnullの場合、何もおきないです。これはRhinoの動作（NullPointerException）とは異ります。今後どうするかは未定
+
+■version 0.3.0 2005/10/16
+  ・2005/10/15 
+  debugオプション付きでビルドするようにした。
+  　→やはり、エラー時に行番号が分からないと困ると思うので。
+  Jakarta-OROのライブラリが存在しても利用しない不具合を修正した。
+  IFunction が IExpObject を継承しないようにした。
+  ・2005/09/11～2005/10/09
+  IParsedExpression で evaluete() がObjectを返していたのをIExpObjectとした。同時に参照を返すevalRef()を追加…そこら中大改造。
+  　→高速化した。
+  Dateオブジェクトで数字を加算するとjava.util.Dateを返していたのを修正
+  RegExpのexec()メソッドでjava.lang.Stringを返していたのを修正
+  String.prototype.replace()メソッドでjava.lang.Stringを返していたのを修正
+  ・2005/09/08
+  ユーザー定義関数呼び出し時に arguments オブジェクトの本体を遅延生成することで高速化をした。
+  　→以前はArrayオブジェクトをargumentsオブジェクトとして生成していたが、argumentsオブジェクト
+  　　の初回アクセス時に内部的にArrayオブジェクトを生成して利用するクラスを作った）
+  var ステートメント実行の度に値が初期化されていたのを修正
+  　→初期値が指定されていない場合は、最初のみ undefined で初期化する
+  　→初期値が指定されている場合は毎回初期化する
+
+■version 0.2.1 2005/09/07
+  ・2005/09/04
+  後置単項演算子と二項演算子を組み合わせて使うとエラーになっていたのを修正
+    (「i++, j++」とか)
+  ・2005/09/06
+  前置単項演算子が複数並んでいるとエラーになったのを修正
+  　（~~1 とか、 1+-+-+-+-1 でも出てた）
+  [] あるいは {} で配列・オブジェクトを初期化した場合、式に変数オブジェクトがあると変数が展開されていなかったのを修正
+  toString() メソッドを持つオブジェクトの表示時にそれを使用するように変更
+  Array.prototype.toString()が各要素のオーバーライドされたtoString()を呼び出していなかったのを修正
+  Array.prototype.toLocaleString()が各要素のオーバーライドされたtoLocaleString()を呼び出していなかったのを修正
+  ScriptEngine クラスのmainメソッドで対話モードの時、演算結果が undefined の時、 undefined を表示しないようにした。
+  未定義の変数を読みとろうとした際にエラーとなるように修正
+
+■version 0.2.0 2005/08/13
+  インターネット初公開版
+

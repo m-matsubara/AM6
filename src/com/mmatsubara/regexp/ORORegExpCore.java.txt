@@ -1,0 +1,72 @@
+package jp.gr.java_conf.matsubara.regexp;
+
+
+import org.apache.oro.text.regex.MatchResult;
+import org.apache.oro.text.regex.Pattern;
+import org.apache.oro.text.regex.PatternCompiler;
+import org.apache.oro.text.regex.PatternMatcher;
+import org.apache.oro.text.regex.Perl5Compiler;
+import org.apache.oro.text.regex.Perl5Matcher;
+
+/**
+ * 正規表現をサポートするオブジェクトです。<br/>
+ * <br/>
+ * 作成日: 2005/05/03
+ * 
+ * @author m.matsubara
+ */
+public class ORORegExpCore implements IRegExpCore {
+    private PatternMatcher matcher = new Perl5Matcher();
+    private Pattern pattern;
+
+    public ORORegExpCore() throws Exception {
+        
+    }
+
+    /* (Javadoc なし)
+     * @see jp.gr.java_conf.matsubara.regexp.IRegExpCore#init(java.lang.String, java.lang.String)
+     */
+    public void init(String pattern, String flags) throws Exception {
+        PatternCompiler compiler = new Perl5Compiler();
+        this.pattern = compiler.compile(pattern);
+    }
+    
+    /* (Javadoc なし)
+     * @see jp.gr.java_conf.matsubara.regexp.IRegExpCore#search(java.lang.String)
+     */
+    public RegMatchResult[] match(String source) {
+        /* TODO ECMA262 と異なる結果を返すことがある模様
+         * 
+         * new RegExp("(.*?)a(?!(a+)b\\2c)\\2(.*)").exec("baaabaac")
+         * は、
+         *   "baaabaac", "ba", undefined, "abaac"
+         * を返すべきだが、実際には
+         *   "baaabaac", "ba", "a", "baac"
+         * を返す。
+         */
+        MatchResult matchResult;
+        if (matcher.contains(source, this.pattern)) {
+            matchResult = matcher.getMatch();
+            int max = matchResult.groups();
+            RegMatchResult[] result = new RegMatchResult[max];
+            for (int idx = 0; idx < max; idx++) {
+                int begin = matchResult.beginOffset(idx);
+                int end = matchResult.endOffset(idx);
+                if (begin != -1 && end != -1)
+                    result[idx] = new RegMatchResult(begin, end);
+                else
+                    result[idx] = null;
+            }
+            return result;
+        }
+        return null;
+    }
+    
+    /* (非 Javadoc)
+     * @see jp.gr.java_conf.matsubara.expresser.type.IRegExp#test()
+     */
+    public boolean test(String source) {
+        return  matcher.contains(source, this.pattern);
+    }
+}
+

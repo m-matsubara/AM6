@@ -1,0 +1,1 @@
+このディレクトリに jakarta-oro の jar ファイル(たとえば jakarta-oro-2.0.8.jar など)を配置してください。

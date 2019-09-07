@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="am6" default="build" basedir=".">
+	<!-- このビルドのためにグローバルプロパティを設定します -->
+	<property file="build.properties"/>
+
+	<target name="prepare" description="各ターゲットを実行するための準備をします">
+		<!-- タイムスタンプを作成します -->
+		<tstamp/>
+		<!-- コンパイルで使用するビルドディレクトリを作成します -->
+		<mkdir dir="${build}" />
+		<!-- 出力ディレクトリを作成します -->
+		<mkdir dir="${dest}" />
+		<!-- 外部ライブラリダウンロードディレクトリを作成します -->
+		<mkdir dir="${download}" />
+		<!-- ソースアーカイブディレクトリを作成します -->
+		<mkdir dir="${src_archive}" />
+		<!-- ドキュメントディレクトリを作成します -->
+		<mkdir dir="${doc}" />
+		<!-- Java1.4以降で導入された正規表現ライブラリの存在チェック -->
+		<available property="existJ14RegExp" classname="java.util.regex.Matcher" />
+		<!-- jakarta-ORO 正規表現ライブラリの存在チェック -->
+		<available property="existORO" classname="org.apache.oro.text.regex.Pattern">
+			<classpath>
+				<fileset dir="${lib}">
+					<include name="**/*.jar"/>
+				</fileset>
+			</classpath>
+		</available>
+	</target>
+
+	<target name="make_doc" depends="prepare" description="javadocを作成します">
+		<!-- 今あるjavadocは削除してしまう。 -->
+		<delete>
+			<fileset dir="${doc}" includes="**/*" />
+		</delete>
+		<!-- javadocを作成 -->
+		<javadoc packagenames="com.mmatsubara.*"
+			sourcepath="${src}"
+			destdir="${doc}"
+			author="true"
+			version="true"
+			use="true"
+			Protected="true"
+			windowtitle='amanoiwato 6 Ignis ECMAScript Engine（仮称）デベロッパーズガイド'
+			doctitle='amanoiwato 6 Ignis ECMAScript Engine（仮称）デベロッパーズガイド'
+			bottom="Copyright (c) 2005 m.matsubara All Rights Reserved.">
+			<classpath>
+				<fileset dir="${lib}">
+					<include name="**/*.jar"/>
+				</fileset>
+	    	</classpath>
+		</javadoc>
+		<!-- スタイルシート上書き -->
+		<copy todir="${doc}" file="etc/stylesheet.css" overwrite="true"/>
+	</target>
+
+
+	<target name="compile" depends="prepare" description="javaファイルをコンパイルします">
+		<!-- ${src}から${build}に、Javaコードをコンパイルします -->
+		<javac srcdir="${src}" destdir="${build}" debug="${compile.debug.mode}" optimize="${compile.optimize.mode}" encoding="UTF8" excludes="**/*RegExpCore.java" includeantruntime="false">
+			<classpath>
+				<fileset dir="${lib}">
+					<include name="**/*.jar"/>
+				</fileset>
+			</classpath>
+		</javac>
+		<!-- antcall target="compileORO"/ -->
+		<antcall target="compileJ14RegExp"/>
+	</target>
+
+	<target name="compileORO" depends="prepare" description="ORO正規表現サポートクラスをコンパイルします" if="existORO">
+		<!-- ${src}から${build}に、Javaコードをコンパイルします -->
+		<echo message="ORO正規表現サポートクラスをコンパイルします。"/>
+		<javac srcdir="${src}" destdir="${build}" debug="${compile.debug.mode}" optimize="${compile.optimize.mode}" encoding="UTF8" includes="**/ORORegExp*.java" includeantruntime="false">
+			<classpath>
+				<fileset dir="${lib}">
+					<include name="**/*.jar"/>
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+	
+	<target name="compileJ14RegExp" depends="prepare" description="Java1.4 正規表現サポートクラスをコンパイルします" if="existJ14RegExp">
+		<!-- ${src}から${build}に、Javaコードをコンパイルします -->
+		<echo message="Java1.4 正規表現サポートクラスをコンパイルします。"/>
+		<javac srcdir="${src}" destdir="${build}" debug="${compile.debug.mode}" optimize="${compile.optimize.mode}" encoding="UTF8" includes="**/JavaRegExp*.java" includeantruntime="false">
+			<classpath>
+				<fileset dir="${lib}">
+					<include name="**/*.jar"/>
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="resorce_copy" description="ソースディレクトリからビルドディレクトリにjava以外のリソースをコピーします">
+		<!-- リソース（画像,音声など）をコピー -->
+		<copy todir="${build}">
+			<fileset dir="${src}">
+				<include name="**/*.gif" />
+				<include name="**/*.jpeg" />
+				<include name="**/*.png" />
+				<include name="**/*.au" />
+				<include name="**/*.properties" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="srcpack_backup" depends="prepare" description="ソースディレクトリのバックアップを行います。zipファイルが作成されます。">
+		<!-- ソースファイルを zip にして保存 -->
+		<zip zipfile="${src_archive}/${project}-src-${DSTAMP}.zip"
+			basedir="."
+			includes="${src}/**, ${lib}/*.txt, etc/*, .settings/**, .project, .classpath, *.html, *.txt, *.bat, *.sh, build.xml, *.properties, test/**, ${project}.jpx, ${project}.jpx/local, ${project}.jar"
+		/>
+		<zip zipfile="${project}-src.zip"
+			basedir="."
+			includes="${src}/**, ${lib}/*.txt, etc/*, .settings/**, .project, .classpath, *.html, *.txt, *.bat, *.sh, build.xml, *.properties, test/**, ${project}.jpx, ${project}.jpx/local, ${project}.jar"
+		/>
+	</target>
+
+	<target name="build" depends="compile,resorce_copy" description="ビルドを行い、jarファイルの作成・ソースのバックアップ作成を行います。">
+		<!-- ${build}の中のすべてのファイルをMyProject-${DSTAMP}.jarファイルに格納します -->
+		<!-- jar jarfile="${dest}/${project}-${DSTAMP}.jar" basedir="${build}" 
+			manifest="${src}\META-INF\MANIFEST.MF" / -->
+		<jar jarfile="${project}.jar" basedir="${build}" 
+      		manifest="${src}\META-INF\MANIFEST.MF" />
+		<copy file="${project}.jar" tofile="${dest}/${project}-${DSTAMP}.jar" />
+		<!-- antcall target="srcpack_backup" /-->
+	</target>
+
+	<target name="clean" description="antで作成されたビルド用のディレクトリを削除します。">
+		<!-- ${build}と${dest}ディレクトリツリーを削除します -->
+		<delete dir="${build}" />
+	</target>
+	
+	<target name="getLibrary" depends="prepare" description="外部ライブラリをインターネットより取得します">
+		<get src="http://sunsite.tus.ac.jp/pub/apache/jakarta/oro/binaries/${oroLibName}.zip" dest="${download}/${oroLibName}.zip" usetimestamp="true"/>
+		<unzip src="${download}/${oroLibName}.zip" dest="${download}" />
+		<copy file="${download}/${oroLibName}/${oroLibName}.jar" todir="${lib}" />
+	</target>
+</project>
